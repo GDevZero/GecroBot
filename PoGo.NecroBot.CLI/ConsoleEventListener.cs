@@ -70,6 +70,20 @@ namespace PoGo.NecroBot.CLI
                 LogLevel.Transfer);
         }
 
+        private static void HandleEvent(UpgradePokemonEvent upgradePokemonEvent, ISession session)
+        {
+            Logger.Write(
+                session.Translation.GetTranslation(TranslationString.EventPokemonUpgraded,
+                session.Translation.GetPokemonTranslation(upgradePokemonEvent.Id),
+                upgradePokemonEvent.Cp.ToString(),
+                upgradePokemonEvent.Perfection.ToString("0.00"),
+                upgradePokemonEvent.BestCp.ToString(),
+                upgradePokemonEvent.BestPerfection.ToString("0.00"),
+                LogLevel.LevelUp));
+        }
+
+
+
         private static void HandleEvent(ItemRecycledEvent itemRecycledEvent, ISession session)
         {
             Logger.Write(session.Translation.GetTranslation(TranslationString.EventItemRecycled, itemRecycledEvent.Count, itemRecycledEvent.Id),
@@ -195,7 +209,7 @@ namespace PoGo.NecroBot.CLI
                 pokemonCaptureEvent.Distance.ToString("F2"),
                 returnRealBallName(pokemonCaptureEvent.Pokeball), pokemonCaptureEvent.BallAmount,
                 pokemonCaptureEvent.Exp, familyCandies, pokemonCaptureEvent.Latitude.ToString("0.000000"), pokemonCaptureEvent.Longitude.ToString("0.000000"),
-                pokemonCaptureEvent.Move1, pokemonCaptureEvent.Move2
+                pokemonCaptureEvent.Move1, pokemonCaptureEvent.Move2  , pokemonCaptureEvent.Rarity
                );
                 Logger.Write(message, LogLevel.Caught);
             }
@@ -206,7 +220,7 @@ namespace PoGo.NecroBot.CLI
                 pokemonCaptureEvent.Distance.ToString("F2"),
                 returnRealBallName(pokemonCaptureEvent.Pokeball), pokemonCaptureEvent.BallAmount,
                 pokemonCaptureEvent.Latitude.ToString("0.000000"), pokemonCaptureEvent.Longitude.ToString("0.000000"),
-                pokemonCaptureEvent.Move1,pokemonCaptureEvent.Move2
+                pokemonCaptureEvent.Move1,pokemonCaptureEvent.Move2  , pokemonCaptureEvent.Rarity
                );
                 Logger.Write(message, LogLevel.Flee);
             }
@@ -377,25 +391,31 @@ namespace PoGo.NecroBot.CLI
                         ev.Estimate / 60,
                         ev.Estimate % 60,
                         ev.SpinPokeStop ? "Yes" : "No",
-                        ev.CatchPokemon ? "Yes" : "No"),
+                        ev.CatchPokemon ? "Yes" : "No",
+                        ev.WalkSpeedApplied),
                         LogLevel.Sniper,
                         ConsoleColor.Yellow);
                     break;
                 case HumanWalkSnipeEventTypes.DestinationReached:
-                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeDestinationReached, ev.Latitude, ev.Longitude), LogLevel.Sniper);
-
+                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeDestinationReached, ev.Latitude, ev.Longitude, ev.PauseDuration), LogLevel.Sniper);
                     break;
                 case HumanWalkSnipeEventTypes.PokemonScanned:
-                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeUpdate, ev.RarePokemons.Count, 2, 3), LogLevel.Sniper, ConsoleColor.DarkMagenta);
+                    if(ev.Pokemons != null && ev.Pokemons.Count > 0)
+                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeUpdate, ev.Pokemons.Count, 2, 3), LogLevel.Sniper, ConsoleColor.DarkMagenta);
                     break;
                     case HumanWalkSnipeEventTypes.PokestopUpdated:
-                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeAddedPokestop, ev.NearestDistane, ev.Pokestops.Count), LogLevel.Sniper, ConsoleColor.Yellow);
+                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeAddedPokestop, ev.NearestDistance, ev.Pokestops.Count), LogLevel.Sniper, ConsoleColor.Yellow);
                     break;
 
                 case HumanWalkSnipeEventTypes.NotEnoughtPalls:
                     Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeNotEnoughtBalls, ev.CurrentBalls, ev.MinBallsToSnipe), LogLevel.Sniper, ConsoleColor.Yellow);
                     break;
-
+                case HumanWalkSnipeEventTypes.EncounterSnipePokemon:
+                    Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipePokemonEncountered,
+                        session.Translation.GetPokemonTranslation(ev.PokemonId),
+                        ev.Latitude,
+                        ev.Longitude));
+                    break;
                 default:
                     break;
             }
